@@ -15,7 +15,6 @@ import Data.Foldable
 -- strict
 import Data.Strict.Tuple
 
-
 prune :: forall a. a -> (a -> Bool) -> Int -> Tree a -> Tree a
 prune replacement counts depth = go (max 1 depth)
   where
@@ -31,7 +30,7 @@ prune replacement counts depth = go (max 1 depth)
       Node label (map (go d') children)
 
 
-newtype Repr = Repr {getRepr :: (Tree Label)}
+newtype Repr = Repr {getRepr :: Tree Label}
   deriving stock (Eq)
 
 instance Ord Repr where
@@ -67,7 +66,7 @@ data Label
   -- Note that Repr trees are not correct-by-construction by default; whether
   -- or not children are permitted at a given node depends on the constructor
   -- of the label. We do however use newtypes, and we avoid exporting
-  -- constructors in favour of specialised construction functions, in order to
+  -- constructors in favour of specialised constructor functions, in order to
   -- ensure that all trees constructed by the exposed API are guaranteed to
   -- be valid.
 
@@ -121,6 +120,16 @@ data Label
   | AssocProp
   deriving (Eq, Ord)
 
+-- |
+-- This function is used in diffing to determine if the label
+-- is important or just a marker for the start of a structure
+-- e.g.
+--
+isStructureLabel :: Label -> Bool
+isStructureLabel = \case
+  AssocProp -> True
+  List _    -> True
+  Record _  -> True
 
 mkLeaf :: Label -> Repr
 mkLeaf label = Repr (Node label [])

@@ -104,7 +104,6 @@ recordField label value = label <> ":" <+> value
 
 
 
-
 rowLayout :: (forall ann . [Doc ann] -> Doc ann) -> Int -> [Tree Label] -> Doc Annotation
 rowLayout layout n = layout . map f .  Split.chunksOf n . map prettyTreeInternal
   where
@@ -115,10 +114,3 @@ prettyDict :: [Doc ann] -> Doc ann
 prettyDict = Pretty.group . Pretty.encloseSep (Pretty.flatAlt "{ " "{")
                                         (Pretty.flatAlt " }" "}")
                                         ", "
-
-{-
-list :: [Doc ann] -> Doc ann
-list = Pretty.encloseSep (Pretty.flatAlt"[ " "[")
-                         (Pretty.flatAlt"] " "]")
-                         ","
--}
