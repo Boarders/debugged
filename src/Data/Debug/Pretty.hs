@@ -3,6 +3,7 @@ module Data.Debug.Pretty where
 
 -- debug
 import Data.Debug.Type
+import Data.Debug.Diff
 
 -- prettyprinter
 import Prettyprinter (pretty, Doc, (<+>))
@@ -44,13 +45,13 @@ defaultDocOptions = DocOptions 5 1 1
 prettyRepr :: Repr -> Doc Annotation
 prettyRepr (Repr tree) = Pretty.enclose "<" ">" (prettyTreeTop defaultDocOptions tree)
 
-prettyPrimitive :: PrimLabel -> Doc Annotation
+prettyPrimitive :: PrimLabel -> Doc ann
 prettyPrimitive = \case
-    PrimInt    p -> Pretty.annotate AnnPrimitive (pretty p)
-    PrimBool   p -> Pretty.annotate AnnPrimitive (pretty p)
-    PrimDouble p -> Pretty.annotate AnnPrimitive (pretty p)
-    PrimChar   p -> Pretty.annotate AnnPrimitive (pretty p)
-    PrimText   p -> Pretty.annotate AnnPrimitive (pretty p)
+    PrimInt    p -> pretty p
+    PrimBool   p -> pretty p
+    PrimDouble p -> pretty p
+    PrimChar   p -> pretty p
+    PrimText   p -> pretty p
 
 prettyTreeTop :: DocOptions -> Tree Label -> Doc Annotation
 prettyTreeTop (DocOptions lInd rInd dInd) ts@(Node label xs) = case label of
@@ -86,13 +87,33 @@ prettyTreeInternal (Node label xs) = case label of
   App t -> Pretty.annotate AnnConstructor $ pretty t <+> Pretty.hsep (map prettyTreeInternal xs)
   Opaque t -> pretty t <+> Pretty.hsep (map prettyTreeInternal xs)
   Literal t -> pretty t
-  Dict t -> pretty t <+> Pretty.hsep (map prettyTreeInternal xs)
+  Dict t ->
+    Pretty.hsep [pretty t, Pretty.annotate AnnDict . Pretty.list . map prettyTreeInternal $ xs]    
   AssocProp ->
     let
       (key : [value]) = xs -- invariant: assocProp has two children
     in
       recordField (prettyTreeInternal key) (prettyTreeInternal value)
 
+
+prettyNode :: Label -> [Doc ann] -> Doc ann
+prettyNode label children = case label of
+  prim@(Prim p) -> prettyPrimitive $ p
+  List t ->
+    Pretty.hsep [pretty t, Pretty.list children]
+  Record t ->
+    Pretty.hsep [pretty t , prettyRecord children]
+  Prop t ->
+    recordField (pretty t) (head children)
+  App t -> pretty t <+> Pretty.hsep children
+  Opaque t -> pretty t <+> Pretty.hsep children
+  Literal t -> pretty t
+  Dict t -> pretty t <+> Pretty.list children
+  AssocProp ->
+    let
+      [k, v] = children
+    in
+      recordField k v
 
 prettyRecord :: [Doc ann] -> Doc ann
 prettyRecord = Pretty.group . Pretty.encloseSep (Pretty.flatAlt "{ " "{")
@@ -114,3 +135,57 @@ prettyDict :: [Doc ann] -> Doc ann
 prettyDict = Pretty.group . Pretty.encloseSep (Pretty.flatAlt "{ " "{")
                                         (Pretty.flatAlt " }" "}")
                                         ", "
+
+
+--------------------------------------------------------------------------------
+-------------------- | Pretty printing diffs -----------------------------------
+
+
+data DiffAnnotation =
+    AnnSame
+  | AnnRemoved
+  | AnnAdded
+
+
+
+prettyDiffTree :: DiffTree -> Doc DiffAnnotation
+prettyDiffTree (DiffTree tree) = Pretty.enclose "<" ">" (prettyDiffTreeTop defaultDocOptions tree)
+
+
+prettyDiffTreeTop :: DocOptions -> Tree (Delta Label) -> Doc DiffAnnotation
+prettyDiffTreeTop opts (Node node children) = case node of
+  Same a ->
+    prettyNode a (map (prettyDiffTreeTop opts) children)
+  Different -> case children of
+    [left, right] ->
+      let
+        leftTree  = Pretty.annotate AnnRemoved $ "-" <> (prettyDiffTreeTop opts left)
+        rightTree = Pretty.annotate AnnAdded   $ "+" <> (prettyDiffTreeTop opts right)
+      in
+        Pretty.hsep [leftTree, rightTree]
+    -- impossible case    
+    _ -> mempty
+    
+  Extra1 ->
+    case children of
+      [c] -> Pretty.annotate AnnRemoved $ "-" <> (prettyDiffTreeTop opts c)
+      -- impossible case
+      _  -> mempty
+  Extra2 ->
+    case children of
+      [c] -> Pretty.annotate AnnAdded $ "+" <> (prettyDiffTreeTop opts c)
+      -- impossible case
+      _  -> mempty    
+  SubTree a ->
+    prettyNode a (map (prettyDiffTreeTop opts) children)
+
+eraseDiffTree :: Tree (Delta Label) -> Tree Label
+eraseDiffTree (Node node children) = case node of
+  Same a -> Node a (map eraseDiffTree children)
+  Different -> case children of
+    [left, right] -> undefined
+  Extra1 -> undefined
+  Extra2 -> undefined
+  SubTree a -> undefined
+
+
