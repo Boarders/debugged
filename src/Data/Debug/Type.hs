@@ -31,7 +31,7 @@ prune replacement counts depth = go (max 1 depth)
 
 
 newtype Repr = Repr {getRepr :: Tree Label}
-  deriving stock (Eq)
+  deriving stock (Eq, Show)
 
 instance Ord Repr where
   compare (Repr t1) (Repr t2) =
@@ -43,7 +43,7 @@ data PrimLabel =
   | PrimDouble Double
   | PrimChar   Char
   | PrimText   Text
-  deriving (Eq, Ord)
+  deriving (Eq, Ord, Show)
 
 pattern Int :: Int -> Label
 pattern Int n = Prim (PrimInt n)
@@ -118,7 +118,7 @@ data Label
   -- node with this label should have exactly two children: the key and the
   -- value.
   | AssocProp
-  deriving (Eq, Ord)
+  deriving (Eq, Ord, Show)
 
 -- |
 -- This function is used in diffing to determine if the label
@@ -130,6 +130,10 @@ isStructureLabel = \case
   AssocProp -> True
   List _    -> True
   Record _  -> True
+  _         -> False
+
+fuzzyEqual :: Label -> Label -> Bool
+fuzzyEqual = (==)
 
 mkLeaf :: Label -> Repr
 mkLeaf label = Repr (Node label [])
