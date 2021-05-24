@@ -4,6 +4,10 @@ module Data.Debug.Diff where
 -- containers
 import Data.Tree (Tree(..))
 
+-- debug
+import Data.Debug.Type
+
+
 
 -- | A type for labels for delta trees. If a tree has labels of type `a`, then
 -- | we can represent a delta tree with labels of type `Delta a`.
@@ -33,8 +37,16 @@ data Delta a
   -- This label indicates that we are in a differing subtree (and hence are not
   -- going to bother to perform any more diffing).
   | SubTree a
+  deriving Show
+
+newtype DiffTree = DiffTree {getDiffTree :: Tree (Delta Label)}
+  deriving Show
 
 
+diffRepr :: Repr -> Repr -> DiffTree
+diffRepr (Repr left) (Repr right)
+  = DiffTree (diffWith fuzzyEqual isStructureLabel left right)
+  
 
 
 diffWith
@@ -62,9 +74,9 @@ diffWith fuzzyEq isUnimportant = go
     goChildren :: [Tree a] -> [Tree a] -> [Tree (Delta a)]
     goChildren left right =
       case compare leftLen rightLen of
-        LT -> begin <> map (extra Extra1) (drop leftLen right)
+        GT -> begin <> map (extra Extra1) (drop rightLen left)
         EQ -> begin
-        GT -> begin <> map (extra Extra2) (drop rightLen left)
+        LT -> begin <> map (extra Extra2) (drop leftLen right)
 
       where
         begin    = zipWith go left right
