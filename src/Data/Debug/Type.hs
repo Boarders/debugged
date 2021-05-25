@@ -154,11 +154,11 @@ text = mkLeaf . Text
 list :: Text -> [Repr] -> Repr
 list name = Repr . Node (List name) . map getRepr
 
-record :: Text -> [(Text :!: Repr)] -> Repr
+record :: Text -> [Text :!: Repr] -> Repr
 record name = Repr . Node (Record name) . makeProps
 
 
-makeProps :: [(Text :!: Repr)] -> [Tree Label]
+makeProps :: [Text :!: Repr] -> [Tree Label]
 makeProps = map mkProp . toList
   where
     mkProp :: Text :!: Repr -> Tree Label
@@ -172,7 +172,7 @@ constructor name args =
 
 opaque :: Text -> Repr -> Repr
 opaque name child =
-  Repr ((Node (Opaque name)) [getRepr child])
+  Repr (Node (Opaque name) [getRepr child])
 
 
 opaque_ :: Text -> Repr

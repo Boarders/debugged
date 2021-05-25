@@ -166,7 +166,7 @@ instance (GDebug f, Constructor ('MetaCons n s 'False)) => GDebug (C1 ('MetaCons
   gdebug c@(M1 f) = Debug.constructor (Text.pack (conName c)) (gdebugs f)
 
 instance (Selector s, GDebug f) => GDebugRecord (S1 s f) where
-  grecord c@(M1 f) = [(Text.pack (selName c)) :!: gdebug f]
+  grecord c@(M1 f) = [Text.pack (selName c) :!: gdebug f]
 
 instance (GDebugRecord f, GDebugRecord g) => GDebugRecord (f :*: g) where  
   grecord (f :*: g) = grecord f <> grecord g

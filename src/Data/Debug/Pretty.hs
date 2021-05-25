@@ -54,16 +54,17 @@ prettyTreeTop (DocOptions lInd rInd dInd) ts@(Node label xs) = case label of
   List t | length xs >= lInd
              -> Pretty.vsep
                   [ Pretty.annotate AnnTopName (pretty t)
-                  , (Pretty.annotate AnnTop (rowLayout Pretty.list lInd xs))]
+                  , Pretty.annotate AnnTop (rowLayout Pretty.list lInd xs)
+                  ]
   Record t | length xs >= rInd
              ->Pretty.hsep
                   [ Pretty.annotate AnnTopName (pretty t)
-                  , (Pretty.annotate AnnTop (rowLayout prettyDict lInd xs))
+                  , Pretty.annotate AnnTop (rowLayout prettyDict lInd xs)
                   ]
   Dict t | length xs >= dInd
              -> Pretty.vsep
                   [ Pretty.annotate AnnTopName (pretty t)
-                  , (Pretty.annotate AnnTop (rowLayout prettyDict dInd xs))
+                  , Pretty.annotate AnnTop (rowLayout prettyDict dInd xs)
                   ]
   _          -> prettyTreeInternal ts
 
@@ -94,7 +95,7 @@ prettyTreeInternal (Node label xs) = case label of
 
 prettyNode :: Label -> [Doc ann] -> Doc ann
 prettyNode label children = case label of
-  Prim p -> prettyPrimitive $ p
+  Prim p -> prettyPrimitive p
   List t ->
     Pretty.hsep [pretty t, Pretty.list children]
   Record t ->
@@ -155,8 +156,8 @@ prettyDiffTreeTop opts (Node node children) = case node of
   Different -> case children of
     [left, right] ->
       let
-        leftTree  = Pretty.annotate AnnRemoved $ "-" <> (prettyDiffTreeTop opts left)
-        rightTree = Pretty.annotate AnnAdded   $ "+" <> (prettyDiffTreeTop opts right)
+        leftTree  = Pretty.annotate AnnRemoved $ "-" <> prettyDiffTreeTop opts left
+        rightTree = Pretty.annotate AnnAdded   $ "+" <> prettyDiffTreeTop opts right
       in
         Pretty.hsep [leftTree, rightTree]
     -- impossible case    
@@ -164,12 +165,12 @@ prettyDiffTreeTop opts (Node node children) = case node of
     
   Extra1 ->
     case children of
-      [c] -> Pretty.annotate AnnRemoved $ "-" <> (prettyDiffTreeTop opts c)
+      [c] -> Pretty.annotate AnnRemoved $ "-" <> prettyDiffTreeTop opts c
       -- impossible case
       _  -> mempty
   Extra2 ->
     case children of
-      [c] -> Pretty.annotate AnnAdded $ "+" <> (prettyDiffTreeTop opts c)
+      [c] -> Pretty.annotate AnnAdded $ "+" <> prettyDiffTreeTop opts c
       -- impossible case
       _  -> mempty    
   SubTree a ->
