@@ -19,12 +19,14 @@ import Prettyprinter.Render.Text
 -- Debugged
 import Data.Debug.Class
 import Data.Debug.Pretty
+import Data.Debug.Diff
 
 -- base
 import System.IO
 
 -- containers
 import qualified Data.Map as Map
+import qualified Data.Tree as Tree
 
 -- unordered-containers
 import qualified Data.HashMap.Strict as HashMap
@@ -58,11 +60,24 @@ main = do
   putStrLn ""
   Render.renderIO stdout (fmap addColors. layoutSmart defaultLayoutOptions . prettyRepr . debug $ exRev)
   putStrLn ""
-  putStrLn ""  
-
+  putStrLn ""
+  putStrLn $ "diff of " <> (show exX) <> " " <> (show exX')
+  let diff = (diffRepr (debug exX) (debug exX'))
+--  putStrLn $
+--    Tree.drawTree . fmap show . \case {DiffTree t -> t}$ 
+--    diff
+--
+  putStrLn ""
+  putStrLn ""
+  Render.renderIO stdout (fmap diffColors. layoutSmart defaultLayoutOptions . prettyDiffTree $ diff)
+  putStrLn ""
+  putStrLn ""
 
 exX :: X
-exX = X 3 4 [5, 6, 7]
+exX = X 3 4 [5, 6, 7, 50]
+
+exX' :: X
+exX' = X 3 4 [1, 6, 7]
 
 exRev :: RevList String
 exRev = RevList ["kitty!", "there", "ahoy"]
@@ -89,6 +104,13 @@ addColors = \case
   AnnConstructor -> color Blue
   AnnTop -> color Cyan
   AnnTopName -> color Magenta
+
+diffColors :: DiffAnnotation -> Render.AnsiStyle
+diffColors = \case
+  AnnSame    -> color White
+  AnnRemoved -> color Red
+  AnnAdded   -> color Green
+
 
 
 
