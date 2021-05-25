@@ -2,11 +2,9 @@ module Data.Debug.Type where
 
 -- containers
 import Data.Tree (Tree(..))
-import qualified Data.Tree as Tree
 
 -- text
 import Data.Text (Text)
-import qualified Data.Text as Text
 
 -- base
 import Data.Functor.Classes(Ord1(..))

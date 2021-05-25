@@ -12,13 +12,9 @@ import qualified Prettyprinter as Pretty
 
 --containers
 import Data.Tree (Tree(..))
-import qualified Data.Tree as Tree
 
 -- split
 import qualified Data.List.Split as Split (chunksOf) -- to do swap this out
-
--- base
-import Data.List (transpose, intersperse)
 
 
 data Annotation =
@@ -69,7 +65,7 @@ prettyTreeTop (DocOptions lInd rInd dInd) ts@(Node label xs) = case label of
                   [ Pretty.annotate AnnTopName (pretty t)
                   , (Pretty.annotate AnnTop (rowLayout prettyDict dInd xs))
                   ]
-  l          -> prettyTreeInternal ts
+  _          -> prettyTreeInternal ts
 
 prettyTreeInternal :: Tree Label -> Doc Annotation
 prettyTreeInternal (Node label xs) = case label of
@@ -98,7 +94,7 @@ prettyTreeInternal (Node label xs) = case label of
 
 prettyNode :: Label -> [Doc ann] -> Doc ann
 prettyNode label children = case label of
-  prim@(Prim p) -> prettyPrimitive $ p
+  Prim p -> prettyPrimitive $ p
   List t ->
     Pretty.hsep [pretty t, Pretty.list children]
   Record t ->
@@ -178,14 +174,3 @@ prettyDiffTreeTop opts (Node node children) = case node of
       _  -> mempty    
   SubTree a ->
     prettyNode a (map (prettyDiffTreeTop opts) children)
-
-eraseDiffTree :: Tree (Delta Label) -> Tree Label
-eraseDiffTree (Node node children) = case node of
-  Same a -> Node a (map eraseDiffTree children)
-  Different -> case children of
-    [left, right] -> undefined
-  Extra1 -> undefined
-  Extra2 -> undefined
-  SubTree a -> undefined
-
-
