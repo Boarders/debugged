@@ -182,5 +182,6 @@ instance (GDebug f, GDebug g) => GDebug (f :+: g) where
 data X = X {x :: Int, y :: Int, z :: [Int]}
   deriving Generic
   deriving Debug via Genericly X
+  deriving Show
 
 
