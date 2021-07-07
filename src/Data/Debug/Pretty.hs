@@ -43,11 +43,15 @@ prettyRepr (Repr tree) = Pretty.enclose "<" ">" (prettyTreeTop defaultDocOptions
 
 prettyPrimitive :: PrimLabel -> Doc ann
 prettyPrimitive = \case
-    PrimInt    p -> pretty p
-    PrimBool   p -> pretty p
-    PrimDouble p -> pretty p
-    PrimChar   p -> pretty p
-    PrimText   p -> pretty p
+    PrimInt     p -> pretty p
+    PrimWord    p -> pretty p
+    PrimBool    p -> pretty p
+    PrimDouble  p -> pretty p
+    PrimChar    p -> pretty p
+    PrimText    p -> pretty p
+    PrimNatural p -> pretty p
+    PrimInteger p -> pretty p
+
 
 prettyTreeTop :: DocOptions -> Tree Label -> Doc Annotation
 prettyTreeTop (DocOptions lInd rInd dInd) ts@(Node label xs) = case label of
