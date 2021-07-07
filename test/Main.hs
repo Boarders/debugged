@@ -1,5 +1,8 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE DataKinds #-}
 
 module Main where
 
@@ -23,6 +26,7 @@ import Data.Debug.Diff
 
 -- base
 import System.IO
+import GHC.Generics
 
 -- containers
 import qualified Data.Map as Map
@@ -61,8 +65,8 @@ main = do
   Render.renderIO stdout (fmap addColors. layoutSmart defaultLayoutOptions . prettyRepr . debug $ exRev)
   putStrLn ""
   putStrLn ""
-  putStrLn $ "diff of " <> (show exX) <> " " <> (show exX')
-  let diff = (diffRepr (debug exX) (debug exX'))
+  putStrLn $ "diff of " <> show exX <> " " <> show exX'
+  let diff = diffRepr (debug exX) (debug exX')
 --  putStrLn $
 --    Tree.drawTree . fmap show . \case {DiffTree t -> t}$ 
 --    diff
@@ -72,6 +76,20 @@ main = do
   Render.renderIO stdout (fmap diffColors. layoutSmart defaultLayoutOptions . prettyDiffTree $ diff)
   putStrLn ""
   putStrLn ""
+
+
+newtype RevList a = RevList {getRevList :: [a]}
+  deriving Debug via (ListLike "RevList" (RevList a))
+
+instance Foldable RevList where
+  toList = reverse . getRevList
+
+
+data X = X {x :: Int, y :: Int, z :: [Int]}
+  deriving stock Generic
+  deriving Debug via Genericly X
+  deriving stock Show
+
 
 exX :: X
 exX = X 3 4 [5, 6, 7, 50]
