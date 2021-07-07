@@ -1,11 +1,11 @@
-{-# language ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Data.Debug.Diff where
 
 -- containers
-import Data.Tree (Tree(..))
+import           Data.Tree       (Tree (..))
 
 -- debug
-import Data.Debug.Type
+import           Data.Debug.Type
 
 
 
@@ -46,7 +46,7 @@ newtype DiffTree = DiffTree {getDiffTree :: Tree (Delta Label)}
 diffRepr :: Repr -> Repr -> DiffTree
 diffRepr (Repr left) (Repr right)
   = DiffTree (diffWith fuzzyEqual isStructureLabel left right)
-  
+
 
 
 diffWith
