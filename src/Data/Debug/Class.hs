@@ -36,20 +36,55 @@ import qualified Data.HashMap.Strict as HashMap
 -- keys
 import Data.Key (FoldableWithKey(..), Key)
 import qualified Data.Key as Key
+import Numeric.Natural (Natural)
+import Data.Int
+import Data.Word
+import Data.Monoid
 
 type Debug :: Type -> Constraint
 class Debug a where
   debug :: a -> Debug.Repr
 
 ------------------------------------------------------------
--- primitive instances
+---- | primitive instances |--------------------------------
+------------------------------------------------------------
+
 
 instance Debug Int where
   debug = Debug.int
 
 instance Debug Word where
+  debug = Debug.word
+
+instance Debug Natural where
+  debug = Debug.natural
+
+instance Debug Integer where
+  debug = Debug.integer
+
+instance Debug Int8 where
   debug = Debug.int . fromIntegral
 
+instance Debug Int16 where
+  debug = Debug.int . fromIntegral
+
+instance Debug Int32 where
+  debug = Debug.int . fromIntegral
+
+instance Debug Int64 where
+  debug = Debug.integer . fromIntegral
+
+instance Debug Word8 where
+  debug = Debug.word . fromIntegral
+
+instance Debug Word16 where
+  debug = Debug.word . fromIntegral
+
+instance Debug Word32 where
+  debug = Debug.word . fromIntegral
+
+instance Debug Word64 where
+  debug = Debug.natural . fromIntegral
 
 instance Debug Float where
   debug = Debug.double . realToFrac
@@ -65,11 +100,36 @@ instance {-# OVERLAPPING #-} Debug String where
 
 
 ------------------------------------------------------------
--- Constructor types
+---- | Constructor types |----------------------------------
+
+instance Debug () where
+  debug ()  = Debug.constructor "()" []
+
+instance Debug Bool where
+  debug True  = Debug.constructor "True"   []
+  debug False  = Debug.constructor "False" []
+
 
 instance Debug a => Debug (Maybe a) where
-  debug Nothing = Debug.constructor "Nothing" []
+  debug Nothing  = Debug.constructor "Nothing" []
   debug (Just a) = Debug.constructor "Just" [debug a]
+
+instance Debug Ordering where
+  debug LT  = Debug.constructor "LT" []
+  debug EQ  = Debug.constructor "EQ" []
+  debug GT  = Debug.constructor "GT" []
+
+instance Debug a => Debug (Sum a) where
+  debug (Sum a) = Debug.constructor "Sum" [debug a]
+
+instance Debug a => Debug (Product a) where
+  debug (Product a) = Debug.constructor "Product" [debug a]
+
+instance Debug a => Debug (First a) where
+  debug (First a) = Debug.constructor "First" [debug a]
+
+instance Debug a => Debug (Last a) where
+  debug (Last a) = Debug.constructor "Last" [debug a]
 
 
 instance (Debug a, Debug b) => Debug (Either a b) where
@@ -77,7 +137,8 @@ instance (Debug a, Debug b) => Debug (Either a b) where
   debug (Right b) = Debug.constructor "Right" [debug b]
 
 ------------------------------------------------------------
--- opaque types
+---- | Opaque Types |---------------------------------------
+------------------------------------------------------------
 
 
 instance Debug (Ptr a) where
@@ -87,7 +148,8 @@ instance Debug (FunPtr a) where
   debug _ = Debug.opaque_ "fun_ptr"
 
 ------------------------------------------------------------
--- list-like types
+---- | List-Like Types | -----------------------------------
+------------------------------------------------------------
 
 
 instance {-# OVERLAPPABLE #-} Debug a => Debug [a] where
@@ -99,17 +161,9 @@ instance (Foldable f, Debug a, KnownSymbol name) => Debug (ListLike name (f a)) 
   debug (ListLike xs) =
     Debug.list ( Text.pack (symbolVal @name Proxy) ) ( map debug $ toList xs)
 
-
-newtype RevList a = RevList {getRevList :: [a]}
-  deriving Debug via (ListLike "RevList" (RevList a))
-
-instance Foldable RevList where
-  toList = reverse . getRevList
-
-
-
 ------------------------------------------------------------
--- map types
+---- | Map Types |------------------------------------------
+------------------------------------------------------------
 
 instance (Debug k, Debug v) => Debug (Map.Map k v) where
   debug = Debug.dict "Map" .  fmap f . Map.toList
@@ -135,7 +189,9 @@ instance (FoldableWithKey f, Debug v, Debug (Key f) , KnownSymbol name) => Debug
     where
       f (k,v) = debug k :!: debug v
 
--- Generics
+------------------------------------------------------------
+--- | Generics |--------------------------------------------
+------------------------------------------------------------
 
 type GDebug :: (Type -> Type) -> Constraint
 class GDebug f where
@@ -161,14 +217,14 @@ instance (Debug a) => (GDebug (K1 l a)) where
 instance (GDebugRecord f, Constructor ('MetaCons n s 'True), Constructor ('MetaCons n s 'True))
   => GDebug (C1 ('MetaCons n s 'True) f) where
   gdebug c@(M1 f) = Debug.record (Text.pack (conName c)) (grecord f)
-  
+
 instance (GDebug f, Constructor ('MetaCons n s 'False)) => GDebug (C1 ('MetaCons n s 'False) f) where
   gdebug c@(M1 f) = Debug.constructor (Text.pack (conName c)) (gdebugs f)
 
 instance (Selector s, GDebug f) => GDebugRecord (S1 s f) where
   grecord c@(M1 f) = [Text.pack (selName c) :!: gdebug f]
 
-instance (GDebugRecord f, GDebugRecord g) => GDebugRecord (f :*: g) where  
+instance (GDebugRecord f, GDebugRecord g) => GDebugRecord (f :*: g) where
   grecord (f :*: g) = grecord f <> grecord g
 
 
@@ -176,12 +232,4 @@ instance (GDebug f, GDebug g) => GDebug (f :+: g) where
   gdebug  (L1 f)  = gdebug f
   gdebug  (R1 f)  = gdebug f
   gdebugs (L1 f)  = gdebugs f
-  gdebugs (R1 f)  = gdebugs f  
-
-
-data X = X {x :: Int, y :: Int, z :: [Int]}
-  deriving Generic
-  deriving Debug via Genericly X
-  deriving Show
-
-
+  gdebugs (R1 f)  = gdebugs f
