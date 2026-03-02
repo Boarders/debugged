@@ -1,0 +1,95 @@
+cabal-version:      3.4
+category:           Languages
+build-type:         Simple
+name:               debugged
+synopsis:           Clone of purescript-debugged
+version:            0.1.0
+
+Library Debugged
+
+  ghc-options:
+    -O2
+    -Wall
+    -Wincomplete-patterns
+
+  hs-source-dirs:
+    src/
+
+  build-depends:
+      base
+    , bytestring
+    , containers
+    , keys
+    , unordered-containers
+    , text
+    , strict
+    , vector
+    , primitive
+    , prettyprinter
+    , prettyprinter-ansi-terminal
+    , split
+    , text-builder
+
+  exposed-modules:
+    Data.Debug.Type
+    Data.Debug.Class
+    Data.Debug.Pretty
+    Data.Debug.Diff
+    Data.Debug
+    Data.Debug.Generics
+
+  default-language:
+    GHC2021
+
+  default-extensions:
+    UndecidableInstances 
+    DataKinds 
+    PolyKinds 
+    StandaloneKindSignatures 
+    FlexibleContexts 
+    DerivingVia 
+    DeriveGeneric 
+    TypeApplications  
+    ScopedTypeVariables
+    GeneralizedNewtypeDeriving
+    DerivingStrategies
+    TypeOperators
+    LambdaCase
+    FlexibleInstances
+    OverloadedStrings
+    GADTs
+    PatternSynonyms
+    DeriveFunctor
+    BangPatterns
+    PackageImports
+
+test-suite test
+
+  main-is:
+    Main.hs
+
+  type:
+    exitcode-stdio-1.0
+
+  ghc-options:
+    -threaded -with-rtsopts=-N
+
+  hs-source-dirs:
+    test/
+
+  build-depends:
+      debugged:Debugged
+    , base
+    , QuickCheck
+    , tasty
+    , tasty-hunit
+    , tasty-quickcheck
+    , text
+    , prettyprinter
+    , containers
+    , unordered-containers
+    , prettyprinter-ansi-terminal
+
+
+  default-language:
+    Haskell2010
