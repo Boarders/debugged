@@ -2,6 +2,10 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE DerivingStrategies #-}
+<<<<<<< Updated upstream
+=======
+{-# LANGUAGE DeriveGeneric #-}
+>>>>>>> Stashed changes
 {-# LANGUAGE DataKinds #-}
 
 module Main where
@@ -23,22 +27,26 @@ import Prettyprinter.Render.Text
 import Data.Debug.Class
 import Data.Debug.Pretty
 import Data.Debug.Diff
+import Data.Debug.Generics (Genericly(..))
 
 -- base
 import System.IO
 import GHC.Generics
+<<<<<<< Updated upstream
+=======
+import Data.Foldable
+>>>>>>> Stashed changes
 
 -- containers
-import qualified Data.Map as Map
+import qualified Data.Map as Map hiding (toList)
 import qualified Data.Tree as Tree
 
 -- unordered-containers
-import qualified Data.HashMap.Strict as HashMap
+import qualified Data.HashMap.Strict as HashMap hiding (toList)
 
 -- prettyprinter-ansi-ternimal
 import Prettyprinter.Render.Terminal (color, Color(..))
 import qualified Prettyprinter.Render.Terminal as Render
-
 
 
 main :: IO ()
@@ -68,7 +76,7 @@ main = do
   putStrLn $ "diff of " <> show exX <> " " <> show exX'
   let diff = diffRepr (debug exX) (debug exX')
 --  putStrLn $
---    Tree.drawTree . fmap show . \case {DiffTree t -> t}$ 
+--    Tree.drawTree . fmap show . \case {DiffTree t -> t}$
 --    diff
 --
   putStrLn ""
@@ -77,20 +85,30 @@ main = do
   putStrLn ""
   putStrLn ""
 
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 newtype RevList a = RevList {getRevList :: [a]}
   deriving Debug via (ListLike "RevList" (RevList a))
 
 instance Foldable RevList where
+<<<<<<< Updated upstream
   toList = reverse . getRevList
 
+=======
+  foldMap f = foldMap f . reverse . getRevList
+>>>>>>> Stashed changes
 
 data X = X {x :: Int, y :: Int, z :: [Int]}
   deriving stock Generic
   deriving Debug via Genericly X
   deriving stock Show
 
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 exX :: X
 exX = X 3 4 [5, 6, 7, 50]
 
@@ -128,10 +146,6 @@ diffColors = \case
   AnnSame    -> color White
   AnnRemoved -> color Red
   AnnAdded   -> color Green
-
-
-
-
 
 {-
 tests :: TestTree

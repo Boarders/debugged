@@ -9,6 +9,7 @@ import Data.Text (Text)
 -- base
 import Data.Functor.Classes(Ord1(..))
 import Data.Foldable
+import GHC.Natural
 
 -- strict
 import Data.Strict.Tuple
@@ -27,7 +28,6 @@ prune replacement counts depth = go (max 1 depth)
       d' = if counts label then d-1 else d
     in
       Node label (map (go d') children)
-
 
 newtype Repr = Repr {getRepr :: Tree Label}
   deriving stock (Eq, Show)
@@ -76,8 +76,11 @@ pattern Text n = Prim (PrimText n)
 data Label
   -- Note that Repr trees are not correct-by-construction by default; whether
   -- or not children are permitted at a given node depends on the constructor
-  -- of the label. We do however use newtypes, and we avoid exporting
-  -- constructors in favour of specialised constructor functions, in order to
+  -- of the label. In general, we would need to know the arity of the given
+  -- label and so we would need a simplified sort of dependent type
+  
+  -- We do however use newtypes, and avoid exporting constructors in favour
+  -- of specialised constructor functions, in order to
   -- ensure that all trees constructed by the exposed API are guaranteed to
   -- be valid.
 
@@ -118,7 +121,7 @@ data Label
   -- types which have an obvious representation which doesn't fit into any of
   -- the other options for constructing Repr values. For example, dates or
   -- times may want to use this constructor in order to display as e.g. <Date:
-  -- 2019-02-01> or <Time: 12:00? respectively.
+  -- 2019-02-01> or <Time: 12:00> respectively.
   | Literal Text
 
   -- This constructor is for map-like collections. The children are the
@@ -143,9 +146,11 @@ isStructureLabel = \case
   Record _  -> True
   _         -> False
 
+-- TO DO: make this actually fuzzy equality
 fuzzyEqual :: Label -> Label -> Bool
 fuzzyEqual = (==)
 
+-- smart constructors
 mkLeaf :: Label -> Repr
 mkLeaf label = Repr (Node label [])
 
@@ -179,7 +184,6 @@ list name = Repr . Node (List name) . map getRepr
 record :: Text -> [Text :!: Repr] -> Repr
 record name = Repr . Node (Record name) . makeProps
 
-
 makeProps :: [Text :!: Repr] -> [Tree Label]
 makeProps = map mkProp . toList
   where
@@ -191,21 +195,17 @@ constructor :: Text -> [Repr] -> Repr
 constructor name args =
   Repr (Node (App name) (map getRepr args))
 
-
 opaque :: Text -> Repr -> Repr
 opaque name child =
   Repr (Node (Opaque name) [getRepr child])
-
 
 opaque_ :: Text -> Repr
 opaque_ name =
   Repr (Node (Opaque name) [])
 
-
 opaqueLiteral :: Text -> Text -> Repr
 opaqueLiteral name val =
   Repr (Node (Opaque name) [Node (Literal val) []])
-
 
 dict :: Text -> [Repr :!: Repr] -> Repr
 dict name contents =
@@ -214,13 +214,11 @@ dict name contents =
     mkAssocProp :: Repr :!: Repr -> Tree Label
     mkAssocProp ((Repr k) :!: (Repr v)) = Node AssocProp [k, v]
 
-
 addsDepth :: Label -> Bool
 addsDepth = \case
   Prop _    -> False
   AssocProp -> False
   _         -> True
-
 
 labelIsUnimportant :: Label -> Bool
 labelIsUnimportant = \case
@@ -228,4 +226,3 @@ labelIsUnimportant = \case
   List _      -> True
   Record _    -> True
   _           -> False
-

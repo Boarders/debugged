@@ -47,8 +47,6 @@ diffRepr :: Repr -> Repr -> DiffTree
 diffRepr (Repr left) (Repr right)
   = DiffTree (diffWith fuzzyEqual isStructureLabel left right)
 
-
-
 diffWith
   :: forall a
   .  (a -> a -> Bool)

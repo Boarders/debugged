@@ -1,37 +1,27 @@
-{-# language UndecidableInstances #-}
-{-# language DataKinds #-}
-{-# language PolyKinds #-}
-{-# language StandaloneKindSignatures #-}
-{-# language FlexibleContexts #-}
-{-# language DerivingVia #-}
-{-# language DeriveGeneric #-}
-{-# language TypeApplications #-}
+
 module Data.Debug.Class where
 
--- Debugged
-import qualified Data.Debug.Type as Debug
+import qualified "this" Data.Debug.Type as Debug
 
--- base
-import GHC.Exts hiding (toList)
-import GHC.Generics
-import Data.Kind
-import GHC.TypeLits
-import Data.Proxy
-import Data.Foldable (toList)
+import "base" GHC.Exts hiding (toList)
+import "base" GHC.Generics
+import "base" Data.Kind
+import "base" GHC.TypeLits
+import "base" Data.Proxy
+import "base" Data.Foldable (toList)
+import "base" Data.Word
+import "base" GHC.Int
+import "base" Foreign.ForeignPtr
+import "base" Foreign.Ptr
 
--- text
-import qualified Data.Text as Text
+import qualified "text" Data.Text as Text
 
--- strict
-import Data.Strict.Tuple
+import "strict" Data.Strict.Tuple
 
--- containers
-import qualified Data.Map as Map
-import qualified Data.IntMap as IntMap
+import qualified "containers" Data.Map as Map
+import qualified "containers" Data.IntMap as IntMap
 
--- unordered-containers
-import qualified Data.HashMap.Strict as HashMap
-
+import qualified "unordered-containers" Data.HashMap.Strict as HashMap
 
 -- keys
 import Data.Key (FoldableWithKey(..), Key)
@@ -41,6 +31,9 @@ import Data.Int
 import Data.Word
 import Data.Monoid
 
+-- |
+-- A Typeclass for types which can be converted `Debug.Repr` intended for
+-- debug pretty printing.
 type Debug :: Type -> Constraint
 class Debug a where
   debug :: a -> Debug.Repr
@@ -152,6 +145,10 @@ instance Debug (FunPtr a) where
 ------------------------------------------------------------
 
 
+---------------------
+-- List-like Types --
+---------------------
+
 instance {-# OVERLAPPABLE #-} Debug a => Debug [a] where
   debug xs = Debug.list "List" (map debug xs)
 
@@ -169,7 +166,6 @@ instance (Debug k, Debug v) => Debug (Map.Map k v) where
   debug = Debug.dict "Map" .  fmap f . Map.toList
     where
       f (k,v) = debug k :!: debug v
-
 
 instance (Debug v) => Debug (IntMap.IntMap v) where
   debug = Debug.dict "IntMap" .  fmap f . IntMap.toList

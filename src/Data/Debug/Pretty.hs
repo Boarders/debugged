@@ -16,7 +16,6 @@ import Data.Tree (Tree(..))
 -- split
 import qualified Data.List.Split as Split (chunksOf) -- to do swap this out
 
-
 data Annotation =
     AnnListlike
   | AnnRecord
@@ -89,10 +88,10 @@ prettyTreeInternal (Node label xs) = case label of
   Opaque t -> pretty t <+> Pretty.hsep (map prettyTreeInternal xs)
   Literal t -> pretty t
   Dict t ->
-    Pretty.hsep [pretty t, Pretty.annotate AnnDict . Pretty.list . map prettyTreeInternal $ xs]    
+    Pretty.hsep [pretty t, Pretty.annotate AnnDict . Pretty.list . map prettyTreeInternal $ xs]
   AssocProp ->
     let
-      (key : [value]) = xs -- invariant: assocProp has two children
+      [key , value] = xs -- invariant: assocProp has two children
     in
       recordField (prettyTreeInternal key) (prettyTreeInternal value)
 
@@ -112,7 +111,7 @@ prettyNode label children = case label of
   Dict t -> pretty t <+> Pretty.list children
   AssocProp ->
     let
-      [k, v] = children
+      [k, v] = children -- invariant: assocProp has two children
     in
       recordField k v
 
@@ -124,34 +123,27 @@ prettyRecord = Pretty.group . Pretty.encloseSep (Pretty.flatAlt "{ " "{")
 recordField :: Doc ann -> Doc ann -> Doc ann
 recordField label value = label <> ":" <+> value
 
-
-
 rowLayout :: (forall ann . [Doc ann] -> Doc ann) -> Int -> [Tree Label] -> Doc Annotation
 rowLayout layout n = layout . map f .  Split.chunksOf n . map prettyTreeInternal
   where
     f = Pretty.concatWith (\a b -> a <> ", " <> b)
-
 
 prettyDict :: [Doc ann] -> Doc ann
 prettyDict = Pretty.group . Pretty.encloseSep (Pretty.flatAlt "{ " "{")
                                         (Pretty.flatAlt " }" "}")
                                         ", "
 
-
 --------------------------------------------------------------------------------
 -------------------- | Pretty printing diffs -----------------------------------
-
+--------------------------------------------------------------------------------
 
 data DiffAnnotation =
     AnnSame
   | AnnRemoved
   | AnnAdded
 
-
-
 prettyDiffTree :: DiffTree -> Doc DiffAnnotation
 prettyDiffTree (DiffTree tree) = Pretty.enclose "<" ">" (prettyDiffTreeTop defaultDocOptions tree)
-
 
 prettyDiffTreeTop :: DocOptions -> Tree (Delta Label) -> Doc DiffAnnotation
 prettyDiffTreeTop opts (Node node children) = case node of
@@ -164,9 +156,9 @@ prettyDiffTreeTop opts (Node node children) = case node of
         rightTree = Pretty.annotate AnnAdded   $ "+" <> prettyDiffTreeTop opts right
       in
         Pretty.hsep [leftTree, rightTree]
-    -- impossible case    
+    -- TO DO: add asserts here
+    -- impossible case
     _ -> mempty
-    
   Extra1 ->
     case children of
       [c] -> Pretty.annotate AnnRemoved $ "-" <> prettyDiffTreeTop opts c
@@ -176,6 +168,6 @@ prettyDiffTreeTop opts (Node node children) = case node of
     case children of
       [c] -> Pretty.annotate AnnAdded $ "+" <> prettyDiffTreeTop opts c
       -- impossible case
-      _  -> mempty    
+      _  -> mempty
   SubTree a ->
     prettyNode a (map (prettyDiffTreeTop opts) children)
