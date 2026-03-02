@@ -12,6 +12,7 @@ import Data.Foldable
 
 -- strict
 import Data.Strict.Tuple
+import Numeric.Natural (Natural)
 
 prune :: forall a. a -> (a -> Bool) -> Int -> Tree a -> Tree a
 prune replacement counts depth = go (max 1 depth)
@@ -36,15 +37,27 @@ instance Ord Repr where
     liftCompare compare t1 t2
 
 data PrimLabel =
-    PrimInt    Int
-  | PrimBool   Bool
-  | PrimDouble Double
-  | PrimChar   Char
-  | PrimText   Text
+    PrimInt     Int
+  | PrimWord    Word
+  | PrimNatural Natural
+  | PrimInteger Integer
+  | PrimBool    Bool
+  | PrimDouble  Double
+  | PrimChar    Char
+  | PrimText    Text
   deriving (Eq, Ord, Show)
 
 pattern Int :: Int -> Label
 pattern Int n = Prim (PrimInt n)
+
+pattern Word :: Word -> Label
+pattern Word n = Prim (PrimWord n)
+
+pattern Natural :: Natural -> Label
+pattern Natural n = Prim (PrimNatural n)
+
+pattern Integer :: Integer -> Label
+pattern Integer n = Prim (PrimInteger n)
 
 pattern Bool :: Bool -> Label
 pattern Bool n = Prim (PrimBool n)
@@ -138,6 +151,15 @@ mkLeaf label = Repr (Node label [])
 
 int :: Int -> Repr
 int = mkLeaf . Int
+
+word :: Word -> Repr
+word = mkLeaf . Word
+
+natural :: Natural -> Repr
+natural = mkLeaf . Natural
+
+integer :: Integer -> Repr
+integer = mkLeaf . Integer
 
 double :: Double -> Repr
 double = mkLeaf . Double
